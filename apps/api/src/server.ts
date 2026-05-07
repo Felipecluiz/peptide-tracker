@@ -1,6 +1,8 @@
 import fastify from "fastify";
 import fastifyJwt from "@fastify/jwt";
 import { authRoutes } from "./routes/auth";
+import { protocolRoutes } from "./routes/protocols";
+import { logRoutes } from "./routes/logs";
 
 const app = fastify();
 
@@ -9,6 +11,8 @@ app.register(fastifyJwt, {
 });
 
 app.register(authRoutes);
+app.register(protocolRoutes, { prefix: "/protocols" });
+app.register(logRoutes, { prefix: "/protocols" });
 
 app.listen({ port: Number(process.env.PORT) || 3333 }, (err, address) => {
   if (err) {
