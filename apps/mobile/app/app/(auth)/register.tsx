@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import { useRouter } from "expo-router";
 import { useAuthStore } from "../../lib/stores/auth.store";
 import { api } from "../../lib/api";
-import { useRouter } from "expo-router";
-export default function Login() {
+
+export default function Register() {
   const { signIn } = useAuthStore();
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleLogin() {
+  async function handleRegister() {
     try {
-      const { data } = await api.post("/login", { email, password });
+      const { data } = await api.post("/register", { name, email, password });
       await signIn(data.token);
     } catch {
-      Alert.alert("Erro", "Email ou senha inválidos");
+      Alert.alert("Erro", "Não foi possível criar a conta");
     }
   }
 
@@ -36,8 +38,23 @@ export default function Login() {
           marginBottom: 32,
         }}
       >
-        Peptide Tracker
+        Criar conta
       </Text>
+
+      <TextInput
+        placeholder="Nome"
+        placeholderTextColor="#666"
+        value={name}
+        onChangeText={setName}
+        style={{
+          width: "100%",
+          backgroundColor: "#111",
+          color: "#fff",
+          borderRadius: 8,
+          padding: 14,
+          marginBottom: 12,
+        }}
+      />
 
       <TextInput
         placeholder="Email"
@@ -71,27 +88,26 @@ export default function Login() {
           marginBottom: 24,
         }}
       />
-      <TouchableOpacity
-        onPress={() => router.push("/(auth)/register")}
-        style={{ marginTop: 16, marginBottom: 32 }}
-      >
-        <Text style={{ color: "#666" }}>
-          Não tem conta? <Text style={{ color: "#6366f1" }}>Cadastrar</Text>
-        </Text>
-      </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={handleLogin}
+        onPress={handleRegister}
         style={{
           width: "100%",
           backgroundColor: "#6366f1",
           borderRadius: 8,
           padding: 16,
           alignItems: "center",
+          marginBottom: 12,
         }}
       >
         <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
-          Entrar
+          Cadastrar
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.back()}>
+        <Text style={{ color: "#666" }}>
+          Já tem conta? <Text style={{ color: "#6366f1" }}>Entrar</Text>
         </Text>
       </TouchableOpacity>
     </View>

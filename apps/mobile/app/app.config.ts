@@ -29,7 +29,7 @@ const config: ExpoConfig = {
   },
   plugins: ["expo-router", "expo-secure-store"],
   extra: {
-    apiUrl: process.env.API_URL ?? "http://localhost:3333",
+    apiUrl: process.env.API_URL ?? "http://192.168.0.13:3333",
   },
 };
 

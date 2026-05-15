@@ -14,10 +14,13 @@ app.register(authRoutes);
 app.register(protocolRoutes, { prefix: "/protocols" });
 app.register(logRoutes, { prefix: "/protocols" });
 
-app.listen({ port: Number(process.env.PORT) || 3333 }, (err, address) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log(`🚀 Server running at ${address}`);
-});
+app.listen(
+  { port: Number(process.env.PORT) || 3333, host: "0.0.0.0" },
+  (err, address) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    console.log(`🚀 Server running at ${address}`);
+  },
+);
