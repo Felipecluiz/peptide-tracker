@@ -31,7 +31,7 @@ function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#0a0a0a",
           borderTopColor: "#1a1a1a",
-          height: 45 + insets.bottom,
+          height: 64 + insets.bottom,
           paddingBottom: insets.bottom + 8,
         },
         tabBarShowLabel: false,
@@ -57,12 +57,22 @@ function TabsLayout() {
         name="streak"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🔥" label="Série" focused={focused} />
+            <TabIcon emoji="🔥" label="Streak" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="exams"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="🧪" label="Exames" focused={focused} />
           ),
         }}
       />
       <Tabs.Screen name="protocols/new" options={{ href: null }} />
       <Tabs.Screen name="protocols/[id]" options={{ href: null }} />
+      <Tabs.Screen name="exams/new" options={{ href: null }} />
+      <Tabs.Screen name="exams/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

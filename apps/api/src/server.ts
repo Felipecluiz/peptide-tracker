@@ -3,12 +3,13 @@ import fastifyJwt from "@fastify/jwt";
 import { authRoutes } from "./routes/auth";
 import { protocolRoutes } from "./routes/protocols";
 import { logRoutes } from "./routes/logs";
-
+import { examRoutes } from "./routes/exams";
 const app = fastify();
 
 app.register(fastifyJwt, {
   secret: process.env.JWT_SECRET as string,
 });
+app.register(examRoutes, { prefix: "/exams" });
 
 app.register(authRoutes);
 app.register(protocolRoutes, { prefix: "/protocols" });

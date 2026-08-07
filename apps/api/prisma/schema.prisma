@@ -1,6 +1,7 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -15,6 +16,7 @@ model User {
   createdAt DateTime @default(now())
 
   protocols Protocol[]
+  exams     Exam[]
 }
 
 model Protocol {
@@ -41,4 +43,30 @@ model ProtocolLog {
   loggedAt   DateTime @default(now())
   doseTaken  Float
   notes      String?
+}
+
+model Exam {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  fileUrl    String?
+  fileType   String?  // "pdf" | "image"
+  examDate   DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  biomarkers Biomarker[]
+}
+
+model Biomarker {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  name      String   // "IGF-1", "GH", "CRP", etc.
+  value     Float
+  unit      String   // "ng/mL", "mg/L", etc.
+  refMin    Float?
+  refMax    Float?
+  createdAt DateTime @default(now())
 }

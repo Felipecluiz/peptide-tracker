@@ -58,11 +58,18 @@ export default function Home() {
           marginBottom: 24,
         }}
       >
-        <Text style={{ color: "#fff", fontSize: 24, fontWeight: "bold" }}>
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 24,
+            fontWeight: "bold",
+            marginTop: 50,
+          }}
+        >
           Dashboard
         </Text>
         <TouchableOpacity onPress={signOut}>
-          <Text style={{ color: "#ef4444" }}>Sair</Text>
+          <Text style={{ color: "#ef4444", marginTop: 50 }}>Sair</Text>
         </TouchableOpacity>
       </View>
 
