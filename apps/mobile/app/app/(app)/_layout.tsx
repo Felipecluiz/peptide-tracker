@@ -71,8 +71,8 @@ function TabsLayout() {
       />
       <Tabs.Screen name="protocols/new" options={{ href: null }} />
       <Tabs.Screen name="protocols/[id]" options={{ href: null }} />
-      <Tabs.Screen name="exams/new" options={{ href: null }} />
-      <Tabs.Screen name="exams/[id]" options={{ href: null }} />
+      {/* <Tabs.Screen name="exams/new" options={{ href: null }} /> */}
+      {/* <Tabs.Screen name="exams/[id]" options={{ href: null }} /> */}
     </Tabs>
   );
 }

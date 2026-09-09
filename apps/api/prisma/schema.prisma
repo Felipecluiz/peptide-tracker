@@ -57,6 +57,7 @@ model Exam {
   createdAt  DateTime @default(now())
 
   biomarkers Biomarker[]
+  analysis   ExamAnalysis?
 }
 
 model Biomarker {
@@ -68,5 +69,13 @@ model Biomarker {
   unit      String   // "ng/mL", "mg/L", etc.
   refMin    Float?
   refMax    Float?
+  createdAt DateTime @default(now())
+}
+
+model ExamAnalysis {
+  id        String   @id @default(cuid())
+  examId    String   @unique
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  content   String
   createdAt DateTime @default(now())
 }

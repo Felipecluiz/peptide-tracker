@@ -74,3 +74,40 @@ export function useBiomarkerNames() {
     queryFn: async () => (await api.get("/exams/biomarkers/names")).data,
   });
 }
+
+export function useAnalyzeExam() {
+  return useMutation({
+    mutationFn: async (examId: string) =>
+      (await api.post(`/exams/${examId}/analyze`)).data as {
+        content: string;
+        cached: boolean;
+      },
+  });
+}
+export interface ExtractedBiomarker {
+  name: string;
+  value: number;
+  unit: string;
+  refMin?: number;
+  refMax?: number;
+}
+
+export interface ExtractedExam {
+  title: string;
+  examDate?: string;
+  biomarkers: ExtractedBiomarker[];
+}
+
+export function useExtractExam() {
+  return useMutation({
+    mutationFn: async ({
+      base64Image,
+      mimeType,
+    }: {
+      base64Image: string;
+      mimeType: string;
+    }) =>
+      (await api.post("/exams/extract", { base64Image, mimeType }))
+        .data as ExtractedExam,
+  });
+}

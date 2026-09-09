@@ -1,6 +1,8 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
+import { analyzeBiomarkers } from "../lib/ai";
+import { extractExamFromImage } from "../lib/gemini";
 
 export async function examRoutes(app: FastifyInstance) {
   app.addHook("onRequest", async (request, reply) => {
@@ -8,6 +10,27 @@ export async function examRoutes(app: FastifyInstance) {
       await request.jwtVerify();
     } catch {
       reply.status(401).send({ message: "Token inválido ou ausente" });
+    }
+  });
+
+  // EXTRAIR EXAME DE UMA IMAGEM (OCR com IA)
+  app.post("/extract", async (request, reply) => {
+    const schema = z.object({
+      base64Image: z.string(),
+      mimeType: z.string().default("image/jpeg"),
+    });
+
+    const { base64Image, mimeType } = schema.parse(request.body);
+
+    try {
+      const extracted = await extractExamFromImage(base64Image, mimeType);
+      return reply.send(extracted);
+    } catch (error) {
+      request.log.error(error);
+      return reply.status(500).send({
+        message:
+          "Não foi possível extrair os dados da imagem. Tente novamente ou preencha manualmente.",
+      });
     }
   });
 
@@ -92,6 +115,49 @@ export async function examRoutes(app: FastifyInstance) {
 
     await prisma.exam.delete({ where: { id } });
     return reply.status(204).send();
+  });
+
+  // ANALISAR EXAME COM IA
+  app.post("/:id/analyze", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = (request.user as { sub: string }).sub;
+
+    const exam = await prisma.exam.findFirst({
+      where: { id, userId },
+      include: { biomarkers: true, analysis: true },
+    });
+
+    if (!exam)
+      return reply.status(404).send({ message: "Exame não encontrado" });
+
+    if (!exam.biomarkers.length) {
+      return reply
+        .status(400)
+        .send({ message: "Este exame não possui biomarcadores para analisar" });
+    }
+
+    if (exam.analysis) {
+      return reply.send({ content: exam.analysis.content, cached: true });
+    }
+
+    try {
+      const content = await analyzeBiomarkers(
+        exam.biomarkers,
+        exam.title,
+        exam.examDate.toISOString(),
+      );
+
+      const analysis = await prisma.examAnalysis.create({
+        data: { examId: id, content },
+      });
+
+      return reply.send({ content: analysis.content, cached: false });
+    } catch (error) {
+      request.log.error(error);
+      return reply
+        .status(500)
+        .send({ message: "Não foi possível gerar a análise. Tente novamente." });
+    }
   });
 
   // EVOLUÇÃO DE UM BIOMARCADOR (ex: todos os IGF-1 do usuário)

@@ -1,29 +1,17 @@
-import { View, Text, ActivityIndicator } from "react-native";
+import { memo } from "react";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useBiomarkerEvolution } from "../../lib/hooks/useExams";
 
-export default function BiomarkerChart({
-  name,
-  unit,
-}: {
-  name: string;
-  unit: string;
-}) {
+function BiomarkerChart({ name, unit }: { name: string; unit: string }) {
   const { data, isLoading } = useBiomarkerEvolution(name);
 
   if (isLoading)
-    return <ActivityIndicator color="#6366f1" style={{ marginTop: 12 }} />;
+    return <ActivityIndicator color="#6366f1" style={styles.loading} />;
+
   if (!data || data.length < 2) {
     return (
-      <View
-        style={{
-          marginTop: 12,
-          padding: 10,
-          backgroundColor: "#1a1a1a",
-          borderRadius: 8,
-          alignItems: "center",
-        }}
-      >
-        <Text style={{ color: "#555", fontSize: 12 }}>
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyText}>
           Registre mais exames para ver a evolução
         </Text>
       </View>
@@ -39,13 +27,9 @@ export default function BiomarkerChart({
   const pointSpacing = chartWidth / (data.length - 1);
 
   return (
-    <View style={{ marginTop: 14 }}>
-      <Text style={{ color: "#555", fontSize: 11, marginBottom: 8 }}>
-        Evolução de {name}
-      </Text>
-      <View
-        style={{ height: chartHeight, width: chartWidth, position: "relative" }}
-      >
+    <View style={styles.container}>
+      <Text style={styles.title}>Evolução de {name}</Text>
+      <View style={[styles.chart, { height: chartHeight, width: chartWidth }]}>
         {data.map((d, i) => {
           const x = i * pointSpacing;
           const y = chartHeight - ((d.value - min) / range) * chartHeight;
@@ -54,25 +38,20 @@ export default function BiomarkerChart({
           return (
             <View
               key={d.id}
-              style={{ position: "absolute", left: x - 5, top: y - 5 }}
+              style={[styles.pointWrap, { left: x - 5, top: y - 5 }]}
             >
               <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: last ? "#6366f1" : "#444",
-                }}
+                style={[
+                  styles.point,
+                  { backgroundColor: last ? "#6366f1" : "#444" },
+                ]}
               />
               {(first || last) && (
                 <Text
-                  style={{
-                    color: last ? "#6366f1" : "#555",
-                    fontSize: 10,
-                    position: "absolute",
-                    top: 12,
-                    left: -8,
-                  }}
+                  style={[
+                    styles.pointLabel,
+                    { color: last ? "#6366f1" : "#555" },
+                  ]}
                 >
                   {d.value}
                 </Text>
@@ -82,20 +61,14 @@ export default function BiomarkerChart({
         })}
       </View>
 
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          marginTop: 16,
-        }}
-      >
-        <Text style={{ color: "#444", fontSize: 10 }}>
+      <View style={styles.datesRow}>
+        <Text style={styles.dateText}>
           {new Date(data[0].exam.examDate).toLocaleDateString("pt-BR", {
             month: "short",
             year: "2-digit",
           })}
         </Text>
-        <Text style={{ color: "#444", fontSize: 10 }}>
+        <Text style={styles.dateText}>
           {new Date(data[data.length - 1].exam.examDate).toLocaleDateString(
             "pt-BR",
             { month: "short", year: "2-digit" },
@@ -109,11 +82,7 @@ export default function BiomarkerChart({
         const up = diff >= 0;
         return (
           <Text
-            style={{
-              color: up ? "#10b981" : "#ef4444",
-              fontSize: 12,
-              marginTop: 4,
-            }}
+            style={[styles.diffText, { color: up ? "#10b981" : "#ef4444" }]}
           >
             {up ? "▲" : "▼"} {Math.abs(parseFloat(pct))}% desde o primeiro exame
           </Text>
@@ -122,3 +91,30 @@ export default function BiomarkerChart({
     </View>
   );
 }
+
+export default memo(BiomarkerChart);
+
+const styles = StyleSheet.create({
+  loading: { marginTop: 12 },
+  emptyState: {
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  emptyText: { color: "#555", fontSize: 12 },
+  container: { marginTop: 14 },
+  title: { color: "#555", fontSize: 11, marginBottom: 8 },
+  chart: { position: "relative" },
+  pointWrap: { position: "absolute" },
+  point: { width: 10, height: 10, borderRadius: 5 },
+  pointLabel: { fontSize: 10, position: "absolute", top: 12, left: -8 },
+  datesRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  dateText: { color: "#444", fontSize: 10 },
+  diffText: { fontSize: 12, marginTop: 4 },
+});

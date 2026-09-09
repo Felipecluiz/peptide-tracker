@@ -1,10 +1,16 @@
 import fastify from "fastify";
 import fastifyJwt from "@fastify/jwt";
+import fastifyCors from "@fastify/cors";
 import { authRoutes } from "./routes/auth";
 import { protocolRoutes } from "./routes/protocols";
 import { logRoutes } from "./routes/logs";
 import { examRoutes } from "./routes/exams";
-const app = fastify();
+
+const app = fastify({ logger: true });
+
+app.register(fastifyCors, {
+  origin: true,
+});
 
 app.register(fastifyJwt, {
   secret: process.env.JWT_SECRET as string,

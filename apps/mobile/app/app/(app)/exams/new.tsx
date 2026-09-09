@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useCreateExam } from "../../../lib/hooks/useExams";
+import * as ImagePicker from "expo-image-picker";
+import { useCreateExam, useExtractExam } from "../../../lib/hooks/useExams";
 
 const COMMON_BIOMARKERS = [
   { name: "IGF-1", unit: "ng/mL", refMin: 115, refMax: 307 },
@@ -30,6 +32,7 @@ interface BiomarkerInput {
 export default function NewExam() {
   const router = useRouter();
   const { mutate: createExam, isPending } = useCreateExam();
+  const { mutate: extractExam, isPending: isExtracting } = useExtractExam();
 
   const [title, setTitle] = useState("");
   const [examDate, setExamDate] = useState("");
@@ -61,6 +64,66 @@ export default function NewExam() {
 
   function removeBiomarker(index: number) {
     setBiomarkers((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleScan() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permissão necessária",
+        "Precisamos de acesso às fotos para escanear o exame.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      base64: true,
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.[0]?.base64) return;
+
+    const asset = result.assets[0];
+    const mimeType =
+      asset.mimeType ??
+      (asset.uri.endsWith(".png") ? "image/png" : "image/jpeg");
+
+    extractExam(
+      { base64Image: asset.base64, mimeType },
+      {
+        onSuccess: (data) => {
+          if (data.title) setTitle(data.title);
+          if (data.examDate) setExamDate(data.examDate);
+
+          if (data.biomarkers?.length) {
+            setBiomarkers((prev) => [
+              ...prev,
+              ...data.biomarkers.map((b) => ({
+                name: b.name,
+                value: String(b.value),
+                unit: b.unit,
+                refMin: b.refMin != null ? String(b.refMin) : "",
+                refMax: b.refMax != null ? String(b.refMax) : "",
+              })),
+            ]);
+            Alert.alert(
+              "Sucesso",
+              `${data.biomarkers.length} biomarcador(es) identificado(s). Confira antes de salvar.`,
+            );
+          } else {
+            Alert.alert(
+              "Nada encontrado",
+              "Não conseguimos identificar biomarcadores nessa imagem. Preencha manualmente.",
+            );
+          }
+        },
+        onError: () =>
+          Alert.alert(
+            "Erro",
+            "Não foi possível processar a imagem. Tente novamente ou preencha manualmente.",
+          ),
+      },
+    );
   }
 
   function handleCreate() {
@@ -113,6 +176,32 @@ export default function NewExam() {
       >
         Novo Exame
       </Text>
+
+      {/* Escanear com IA */}
+      <TouchableOpacity
+        onPress={handleScan}
+        disabled={isExtracting}
+        style={{
+          backgroundColor: isExtracting ? "#333" : "#1a1a1a",
+          borderRadius: 10,
+          padding: 16,
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: "#6366f1",
+          marginBottom: 24,
+        }}
+      >
+        {isExtracting ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <ActivityIndicator color="#6366f1" />
+            <Text style={{ color: "#6366f1" }}>Analisando imagem...</Text>
+          </View>
+        ) : (
+          <Text style={{ color: "#6366f1", fontWeight: "bold" }}>
+            📷 Escanear exame com IA
+          </Text>
+        )}
+      </TouchableOpacity>
 
       <Label text="Título *" />
       <Input

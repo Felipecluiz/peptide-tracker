@@ -1,10 +1,10 @@
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
+  FlatList,
+  StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useExams, useDeleteExam } from "../../../lib/hooks/useExams";
@@ -29,126 +29,112 @@ export default function ExamsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <ScrollView
-        contentContainerStyle={{
-          padding: 20,
-          paddingTop: 52,
-          paddingBottom: 100,
-        }}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 24,
-            fontWeight: "bold",
-            marginBottom: 24,
-          }}
-        >
-          Exames
-        </Text>
+    <View style={styles.screen}>
+      <FlatList
+        data={exams ?? []}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={<Text style={styles.title}>Exames</Text>}
+        ListEmptyComponent={
+          isLoading ? (
+            <Text style={styles.empty}>Carregando...</Text>
+          ) : (
+            <Text style={styles.empty}>Nenhum exame cadastrado</Text>
+          )
+        }
+        renderItem={({ item: exam }) => (
+          <TouchableOpacity
+            onPress={() => router.push(`/(app)/exams/${exam.id}`)}
+            style={styles.card}
+          >
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{exam.title}</Text>
+              <Text style={styles.dateText}>
+                {new Date(exam.examDate).toLocaleDateString("pt-BR")}
+              </Text>
+            </View>
 
-        {isLoading ? (
-          <ActivityIndicator color="#6366f1" />
-        ) : exams?.length === 0 ? (
-          <Text style={{ color: "#666", textAlign: "center", marginTop: 60 }}>
-            Nenhum exame cadastrado
-          </Text>
-        ) : (
-          exams?.map((exam) => (
-            <TouchableOpacity
-              key={exam.id}
-              onPress={() => router.push(`/(app)/exams/${exam.id}`)}
-              style={{
-                backgroundColor: "#111",
-                borderRadius: 12,
-                padding: 16,
-                marginBottom: 12,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text
-                  style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}
+            <View style={styles.chipsRow}>
+              {exam.biomarkers.map((b) => (
+                <View
+                  key={b.id}
+                  style={[styles.chip, { borderLeftColor: statusColor(b) }]}
                 >
-                  {exam.title}
-                </Text>
-                <Text style={{ color: "#666", fontSize: 12 }}>
-                  {new Date(exam.examDate).toLocaleDateString("pt-BR")}
-                </Text>
-              </View>
+                  <Text style={styles.chipName}>{b.name}</Text>
+                  <Text style={[styles.chipValue, { color: statusColor(b) }]}>
+                    {b.value} {b.unit}
+                  </Text>
+                </View>
+              ))}
+            </View>
 
-              {/* Biomarcadores resumo */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  marginTop: 10,
-                }}
-              >
-                {exam.biomarkers.map((b) => (
-                  <View
-                    key={b.id}
-                    style={{
-                      backgroundColor: "#1a1a1a",
-                      borderRadius: 6,
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderLeftWidth: 3,
-                      borderLeftColor: statusColor(b),
-                    }}
-                  >
-                    <Text style={{ color: "#ccc", fontSize: 11 }}>
-                      {b.name}
-                    </Text>
-                    <Text
-                      style={{
-                        color: statusColor(b),
-                        fontSize: 12,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {b.value} {b.unit}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                onPress={() => confirmDelete(exam.id)}
-                style={{ marginTop: 10, alignSelf: "flex-end" }}
-              >
-                <Text style={{ color: "#ef4444", fontSize: 12 }}>Deletar</Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => confirmDelete(exam.id)}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteText}>Deletar</Text>
             </TouchableOpacity>
-          ))
+          </TouchableOpacity>
         )}
-      </ScrollView>
+      />
 
-      {/* FAB */}
       <TouchableOpacity
         onPress={() => router.push("/(app)/exams/new")}
-        style={{
-          position: "absolute",
-          bottom: 96,
-          right: 24,
-          backgroundColor: "#6366f1",
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          alignItems: "center",
-          justifyContent: "center",
-          elevation: 8,
-        }}
+        style={styles.fab}
       >
-        <Text style={{ color: "#fff", fontSize: 28, lineHeight: 32 }}>+</Text>
+        <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#000" },
+  content: { padding: 20, paddingTop: 52, paddingBottom: 100 },
+  title: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 24 },
+  empty: { color: "#666", textAlign: "center", marginTop: 60 },
+  card: {
+    backgroundColor: "#111",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cardTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    flex: 1,
+    paddingRight: 10,
+  },
+  dateText: { color: "#666", fontSize: 12 },
+  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
+  chip: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderLeftWidth: 3,
+  },
+  chipName: { color: "#ccc", fontSize: 11 },
+  chipValue: { fontSize: 12, fontWeight: "bold" },
+  deleteButton: { marginTop: 10, alignSelf: "flex-end" },
+  deleteText: { color: "#ef4444", fontSize: 12 },
+  fab: {
+    position: "absolute",
+    bottom: 96,
+    right: 24,
+    backgroundColor: "#6366f1",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+  },
+  fabText: { color: "#fff", fontSize: 28, lineHeight: 32 },
+});

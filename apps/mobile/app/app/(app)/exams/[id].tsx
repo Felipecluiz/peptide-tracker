@@ -7,8 +7,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useExam } from "../../../lib/hooks/useExams";
+import { useExam, useAnalyzeExam } from "../../../lib/hooks/useExams";
 import BiomarkerChart from "../../components/BiomarkerChart";
+
 function statusColor(value: number, refMin?: number, refMax?: number) {
   if (refMin == null || refMax == null) return "#666";
   if (value < refMin) return "#f59e0b";
@@ -30,6 +31,12 @@ export default function ExamDetail() {
   const [selectedBiomarker, setSelectedBiomarker] = useState<string | null>(
     null,
   );
+  const {
+    mutate: analyzeExam,
+    data: analysis,
+    isPending: isAnalyzing,
+    error: analyzeError,
+  } = useAnalyzeExam();
 
   if (isLoading)
     return (
@@ -177,6 +184,65 @@ export default function ExamDetail() {
           </TouchableOpacity>
         );
       })}
+
+      {/* Análise com IA */}
+      <Text
+        style={{
+          color: "#999",
+          fontSize: 13,
+          fontWeight: "600",
+          letterSpacing: 1,
+          marginTop: 24,
+          marginBottom: 12,
+        }}
+      >
+        ANÁLISE COM IA
+      </Text>
+
+      {!analysis && (
+        <TouchableOpacity
+          onPress={() => analyzeExam(exam.id)}
+          disabled={isAnalyzing}
+          style={{
+            backgroundColor: isAnalyzing ? "#333" : "#1a1a1a",
+            borderRadius: 10,
+            padding: 16,
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: "#6366f1",
+          }}
+        >
+          {isAnalyzing ? (
+            <ActivityIndicator color="#6366f1" />
+          ) : (
+            <Text style={{ color: "#6366f1", fontWeight: "bold" }}>
+              ✨ Analisar com IA
+            </Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {analyzeError && (
+        <Text style={{ color: "#ef4444", marginTop: 8, fontSize: 13 }}>
+          Não foi possível gerar a análise. Tente novamente.
+        </Text>
+      )}
+
+      {analysis && (
+        <View
+          style={{
+            backgroundColor: "#111",
+            borderRadius: 10,
+            padding: 16,
+            borderLeftWidth: 4,
+            borderLeftColor: "#6366f1",
+          }}
+        >
+          <Text style={{ color: "#ddd", lineHeight: 20 }}>
+            {analysis.content}
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
